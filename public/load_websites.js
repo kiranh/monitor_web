@@ -14,7 +14,6 @@ function loadWebsite(currentUrl, timeFunc) {
       console.log("** Loading time is " + timeTaken + " msec" + " for url: " + currentUrl.url);
       window.setTimeout(function () {
         page.render(currentUrl.name + ".png");
-        phantom.exit();
       }, 1000);
       timeFunc(currentUrl, timeTaken);
     }

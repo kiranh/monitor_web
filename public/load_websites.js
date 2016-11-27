@@ -2,15 +2,19 @@ var webPage = require('webpage'),
     fs = require('fs');
 
 function loadWebsite(currentUrl, timeFunc) {
-  var t = Date.now()
+  var startTime
   var page = webPage.create();
-  var timeTaken = 0;
+  page.onLoadStarted = function() {
+    startTime = new Date();
+  }
+
   page.open(currentUrl.url);
   page.onLoadFinished = function(status) {
     if (status != "success")  {
       timeFunc(currentUrl, -1);
     } else {
-      timeTaken = Date.now() - t;
+      var timeNow = new Date();
+      var timeTaken = timeNow - startTime;
       console.log("** Loading time is " + timeTaken + " msec" + " for url: " + currentUrl.url);
       window.setTimeout(function () {
         page.render(currentUrl.name + ".png");
@@ -20,7 +24,6 @@ function loadWebsite(currentUrl, timeFunc) {
   };
 }
 
-
 function loadConfig() {
   var content = fs.read("website.json");
   var configData = JSON.parse(content);
@@ -28,7 +31,7 @@ function loadConfig() {
   for (var i = 0; i < configData.length; i++) {
     var urlObject = configData[i];
     loadWebsite(urlObject, function(currentUrl, timeTaken) {
-      console.log("++ Calling this crap with " + currentUrl.url + " and current count is " + Object.keys(timingData).length);
+      console.log("++ Calling this timeFun with " + currentUrl.url + " and current count is " + Object.keys(timingData).length);
       timingData[currentUrl.name] = {"name": currentUrl.name, "url": currentUrl.url, "time_taken": timeTaken};
 
       if (Object.keys(timingData).length == configData.length) {

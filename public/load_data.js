@@ -9,7 +9,7 @@ function getTimeData() {
                 "<td>" + value.time_taken + "</td>" +
                 "<td>" + webUrl + "</td>" +
                 "<td>" + imageUrl +  "</td>" +
-                "<td>" + deleteUrl + "</td></tr>";
+                "<td>" + "x" + "</td></tr>";
       $("#data-table").append(row);
     });
     setTimeout(getTimeData, 60000);

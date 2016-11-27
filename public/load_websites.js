@@ -11,8 +11,7 @@ function loadWebsite(currentUrl, currentIndex, timeFunc) {
     startTime = new Date();
   }
 
-  page.open(currentUrl.url);
-  page.onLoadFinished = function(status) {
+  page.open(currentUrl.url), function(status) {
     if (status != "success")  {
       timeFunc(currentUrl, currentIndex, -1);
     } else {
@@ -21,10 +20,11 @@ function loadWebsite(currentUrl, currentIndex, timeFunc) {
       console.log("** Loading time is " + timeTaken + " msec" + " for url: " + currentUrl.url);
       window.setTimeout(function () {
         page.render(currentUrl.name + ".png");
-      }, 1000);
+      }, 2000);
       timeFunc(currentUrl, currentIndex, timeTaken);
     }
-  };
+  });
+    
 }
 
 function loadConfig() {

@@ -1,2 +1,3 @@
 *.png
 Gemfile.lock
+public/website_timing.json

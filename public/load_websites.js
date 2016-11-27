@@ -11,19 +11,30 @@ function loadWebsite(currentUrl, currentIndex, timeFunc) {
     startTime = new Date();
   }
 
-  page.open(currentUrl.url), function(status) {
-    if (status != "success")  {
+  //page.includeJS('https://js.maxmind.com/js/apis/geoip2/v2.1/geoip2.js');
+
+  page.open(currentUrl.url, function(status){
+    if (status != "success") {
       timeFunc(currentUrl, currentIndex, -1);
     } else {
       var timeNow = new Date();
       var timeTaken = timeNow - startTime;
       console.log("** Loading time is " + timeTaken + " msec" + " for url: " + currentUrl.url);
-      window.setTimeout(function () {
-        page.render(currentUrl.name + ".png");
-      }, 2000);
       timeFunc(currentUrl, currentIndex, timeTaken);
     }
   });
+  
+  page.onResourceError = function(resourceError) {
+    console.error(resourceError.url + ':' + resourceError.errorString);
+  }  
+
+  page.onLoadFinished = function(status) {
+    if (status == "success")  {
+      window.setTimeout(function () {
+        page.render(currentUrl.name + ".png");
+      }, 1500);
+    }
+  };
     
 }
 

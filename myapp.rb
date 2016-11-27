@@ -29,36 +29,60 @@ class PhantomJs
       sleep(2)
       loop do
         puts "Looping here"
-        begin
-          process.poll_for_exit(10)
-        rescue ChildProcess::TimeoutError
-          if !$shared_queue.empty?
-            message = $shared_queue.pop(true)
-            case message.mtype
-            when "reload"
-              process.stop
-              sleep(5)
-              start_phantom_js()
-            when "stop"
-              process.stop
-              break
-            when "add"
-              puts "********** Received a message here to add"
-              process.stop
-              add_json_data(message)
-              sleep(5)
-              start_phantom_js
-            when 'remove'
-              puts "********** Received a message to remove"
-              process.stop
-              remove_json_data(message)
-              sleep(5)
-              start_phantom_js
-            end
-          end
-        end
+        sleep(2)
+        process_flag = check_for_running_process()
+        break unless process_flag
       end
     end
+  end
+
+  def check_for_running_process
+    if process.alive?
+      puts "********** Phantomjs is still running"
+      process_incoming_message()
+    else
+      puts "++++++++++ Phantomjs process has died"
+      restart_phantom_js()
+    end
+  end
+
+  def restart_phantom_js
+    process.stop
+    sleep(5)
+    start_phantom_js
+    puts "++++++++++ restarted phantomjs"
+    true
+  rescue
+    puts "==================== Error starting phantomjs =========="
+    puts $!.message
+    puts $!.backtrace
+    false
+  end
+
+  def process_incoming_message
+    if !$shared_queue.empty?
+      message = $shared_queue.pop(true)
+      case message.mtype
+      when "reload"
+        return restart_phantom_js()
+      when "stop"
+        process.stop
+        return false
+      when "add"
+        puts "********** Received a message here to add"
+        process.stop
+        add_json_data(message)
+        sleep(5)
+        start_phantom_js
+      when 'remove'
+        puts "********** Received a message to remove"
+        process.stop
+        remove_json_data(message)
+        sleep(5)
+        start_phantom_js
+      end
+    end
+    true
   end
 
   def remove_json_data(message)

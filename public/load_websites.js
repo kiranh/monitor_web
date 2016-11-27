@@ -1,7 +1,10 @@
 var webPage = require('webpage'),
     fs = require('fs');
+var content = "",
+    configData = [],
+    timingData = {};
 
-function loadWebsite(currentUrl, timeFunc) {
+function loadWebsite(currentUrl, currentIndex, timeFunc) {
   var startTime
   var page = webPage.create();
   page.onLoadStarted = function() {
@@ -11,7 +14,7 @@ function loadWebsite(currentUrl, timeFunc) {
   page.open(currentUrl.url);
   page.onLoadFinished = function(status) {
     if (status != "success")  {
-      timeFunc(currentUrl, -1);
+      timeFunc(currentUrl, currentIndex, -1);
     } else {
       var timeNow = new Date();
       var timeTaken = timeNow - startTime;
@@ -19,29 +22,40 @@ function loadWebsite(currentUrl, timeFunc) {
       window.setTimeout(function () {
         page.render(currentUrl.name + ".png");
       }, 1000);
-      timeFunc(currentUrl, timeTaken);
+      timeFunc(currentUrl, currentIndex, timeTaken);
     }
   };
 }
 
 function loadConfig() {
-  var content = fs.read("website.json");
-  var configData = JSON.parse(content);
-  var timingData = {};
-  for (var i = 0; i < configData.length; i++) {
-    var urlObject = configData[i];
-    loadWebsite(urlObject, function(currentUrl, timeTaken) {
-      console.log("++ Calling this timeFun with " + currentUrl.url + " and current count is " + Object.keys(timingData).length);
-      timingData[currentUrl.name] = {"name": currentUrl.name, "url": currentUrl.url, "time_taken": timeTaken};
+  content = fs.read("website.json");
+  configData = JSON.parse(content);
+  timingData = {};
+  var urlObject = configData[0];
+  loadWebsite(urlObject, 0, webSiteLoaded);
+}
 
-      if (Object.keys(timingData).length == configData.length) {
-        var outputContent = JSON.stringify(timingData);
-        console.log("Writing timing data" + outputContent);
-        fs.write("website_timing.json", outputContent, 'w');
-        timingData = {};
-        rescheduleLoad();
-      }
-    });
+function webSiteLoaded(currentUrl, websiteIndex, timeTaken) {
+  if (currentUrl.name in timingData) {
+    // timingData[currentUrl.name] = {"name": currentUrl.name, "url": currentUrl.url, "time_taken": timeTaken};
+    return;
+  }
+
+  timingData[currentUrl.name] = {"name": currentUrl.name, "url": currentUrl.url, "time_taken": timeTaken};
+  console.log("++ Calling index " + websiteIndex + " name "+ currentUrl.name + " and current count is " + Object.keys(timingData).length);
+
+  if (Object.keys(timingData).length == configData.length) {
+    var outputContent = JSON.stringify(timingData);
+    console.log("Writing timing data" + outputContent);
+    fs.write("website_timing.json", outputContent, 'w');
+    timingData = {};
+    rescheduleLoad();
+  } else {
+    var nextIndex = websiteIndex+1;
+    if (nextIndex < configData.length) {
+      var nextUrl = configData[nextIndex];
+      loadWebsite(nextUrl, nextIndex, webSiteLoaded);
+    }
   }
 }
 

@@ -12,7 +12,10 @@ function loadWebsite(currentUrl, timeFunc) {
     } else {
       timeTaken = Date.now() - t;
       console.log("** Loading time is " + timeTaken + " msec" + " for url: " + currentUrl.url);
-      page.render(currentUrl.name + ".png");
+      window.setTimeout(function () {
+        page.render(currentUrl.name + ".png");
+        phantom.exit();
+      }, 1000);
       timeFunc(currentUrl, timeTaken);
     }
   };

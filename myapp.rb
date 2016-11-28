@@ -9,14 +9,16 @@ Message = Struct.new(:mtype, :murl, :mname)
 Thread.abort_on_exception = true
 
 class PhantomJs
-  attr_accessor :process, :json_file
+  attr_accessor :process, :json_file, :next_ran_at
+  RUN_INTERVAL = 10*60
   def initialize
     @process = nil
     @json_file = File.expand_path(File.join(File.dirname(__FILE__), "public/website.json"))
+
   end
 
   def start_phantom_js
-    puts "********** Starting this sthi"
+    puts "********** #{Time.now} Starting phantomjs process"
     @process = ChildProcess.build("phantomjs", "--ignore-ssl-errors=true", "load_websites.js")
     @process.io.inherit!
     @process.cwd = File.expand_path(File.join(File.dirname(__FILE__), "public"))
@@ -26,12 +28,12 @@ class PhantomJs
   def start_phantom_thread
     Thread.new do
       start_phantom_js()
+      @next_ran_at = Time.now + RUN_INTERVAL
       sleep(2)
       loop do
         puts "Looping here"
         sleep(2)
-        process_flag = check_for_running_process()
-        break unless process_flag
+        check_for_running_process()
       end
     end
   end
@@ -41,8 +43,13 @@ class PhantomJs
       puts "********** Phantomjs is still running"
       process_incoming_message()
     else
-      puts "++++++++++ Phantomjs process has died"
-      restart_phantom_js()
+      puts "++++++++++ #{Time.now} Phantomjs process has died"
+      if next_ran_at < Time.now
+        run_flag = restart_phantom_js()
+        if run_flag
+          @next_ran_at = Time.now + RUN_INTERVAL
+        end
+      end
     end
   end
 

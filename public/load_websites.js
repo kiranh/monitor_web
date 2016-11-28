@@ -10,32 +10,24 @@ function loadWebsite(currentUrl, currentIndex, timeFunc) {
   page.onLoadStarted = function() {
     startTime = new Date();
   }
+  console.log("$$$$$$$$$$ Calling loadWebsite for " + currentUrl.url + " with index " + currentIndex);
 
   //page.includeJS('https://js.maxmind.com/js/apis/geoip2/v2.1/geoip2.js');
+  page.open(currentUrl.url);
 
-  page.open(currentUrl.url, function(status){
+  page.onLoadFinished = function(status) {
     if (status != "success") {
       timeFunc(currentUrl, currentIndex, -1);
     } else {
       var timeNow = new Date();
       var timeTaken = timeNow - startTime;
-      console.log("** Loading time is " + timeTaken + " msec" + " for url: " + currentUrl.url);
-      timeFunc(currentUrl, currentIndex, timeTaken);
-    }
-  });
-  
-  page.onResourceError = function(resourceError) {
-    console.error(resourceError.url + ':' + resourceError.errorString);
-  }  
-
-  page.onLoadFinished = function(status) {
-    if (status == "success")  {
+      console.log("** Loading time is " + timeTaken + " msec" + " for url: " + currentUrl.url + " and index :" + currentIndex);
       window.setTimeout(function () {
         page.render(currentUrl.name + ".png");
       }, 1500);
+      timeFunc(currentUrl, currentIndex, timeTaken);
     }
   };
-    
 }
 
 function loadConfig() {
@@ -60,7 +52,8 @@ function webSiteLoaded(currentUrl, websiteIndex, timeTaken) {
     console.log("Writing timing data" + outputContent);
     fs.write("website_timing.json", outputContent, 'w');
     timingData = {};
-    rescheduleLoad();
+    // rescheduleLoad();
+    phantom.exit();
   } else {
     var nextIndex = websiteIndex+1;
     if (nextIndex < configData.length) {
